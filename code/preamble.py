@@ -19,6 +19,7 @@ import seaborn as sns
 
 import matplotlib.pyplot as plt
 from matplotlib import colors as mcolors
+from matplotlib.patches import Ellipse
 from mpl_toolkits.axes_grid1 import AxesGrid, make_axes_locatable
 plt.rcdefaults()
 fontsize = 12
