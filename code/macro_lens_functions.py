@@ -15,17 +15,17 @@ def D_A(z, H_0 = 70 * km / (second * Mpc), Omega_M = 0.3, Omega_Lambda = 0.7):
     """Comoving angular diameter distance as a function of redshift 'z' for a flat universe."""
     return d_A(z, H_0, Omega_M, Omega_Lambda) * (1+z)
 
-def mu_rel(v_l, v_s, z_l, z_s, D_l, D_s):
-    """Proper motion of the source relative to the lens. Observer velocity is zero."""
-    return v_s / (1 + z_s) / D_s - v_l / (1 + z_l) / D_l
+def mu_rel(v_o, v_l, v_s, z_l, z_s, d_l, d_s, d_ls):
+    """Proper motion of the source relative to the lens."""
+    return v_o / (1 + z_l) * d_ls / (d_l * d_s) + v_s / (1 + z_s) / d_s - v_l / (1 + z_l) / d_l
 
-def Sigma_crit(D_l,D_s):
+def Sigma_crit(d_l,d_s,d_ls):
     """Critical surface mass density"""
-    return 1 / (4*np.pi*G_N) * D_s / (D_l * (D_s - D_l))
+    return 1 / (4*np.pi*G_N) * d_s / (d_l * d_ls)
 
-def theta_Ein(M_l, D_l, D_s):
+def theta_E(M_l, d_l, d_s, d_ls):
     """Einstein radius"""
-    return np.sqrt(4 * G_N * M_l * (D_s - D_l) / (D_l * D_s))
+    return np.sqrt(4 * G_N * M_l * d_ls / (d_l * d_s))
 
 ##### Light profiles #####
 def I_DV(R,I_eff=1,R_eff=1):
@@ -38,11 +38,11 @@ vec_R_half = vec_R[vec_R < 1]
 sum_DV_tot = np.sum((vec_R[1:] - vec_R[:-1]) * 2*np.pi * vec_R[:-1] * I_DV(vec_R[:-1]))
 sum_DV_half = np.sum((vec_R_half[1:] - vec_R_half[:-1]) * 2*np.pi * vec_R_half[:-1] * I_DV(vec_R_half[:-1]))
 
-def kappa_DV(x,y,ell,theta_eff,theta_e,M_Sal,D_l,D_s):
+def kappa_DV(x,y,ell,theta_eff,theta_e,M_Sal,d_l,d_s,d_ls):
     """De Vaucouleurs stellar convergence in x,y coordinates (image plane) 
     with eccentricity 'ecc' and rotation angle 'theta_e', effective radius 'theta_eff',
-    total stellar mass M_Sal, lens and source distances D_l and D_s"""
-    kappa_eff = M_Sal / (theta_eff * D_l)**2 / Sigma_crit(D_l,D_s)
+    total stellar mass M_Sal, lens and source distances d_l and d_s"""
+    kappa_eff = M_Sal / (theta_eff * arcsec * d_l)**2 / Sigma_crit(d_l,d_s,d_ls) # arcsec to correct for units
     x_p = x * np.cos(theta_e) - y * np.sin(theta_e)
     y_p = x * np.sin(theta_e) + y * np.cos(theta_e)
     q = 1 - ell
