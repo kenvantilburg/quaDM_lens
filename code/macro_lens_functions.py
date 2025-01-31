@@ -97,25 +97,25 @@ def psi_SIE_f(x,y,theta_E,f,theta_e):
     sin_phi = y_p / x_abs
     return theta_E * np.sqrt(f)/f_p * (sin_phi * np.arcsin(f_p * sin_phi) + cos_phi * np.arcsinh(f_p / f * cos_phi))
 
-def psi_point(M_l,D_l,D_s,arr_theta):
+def psi_point(M_l,d_l,d_s,d_ls,arr_theta):
     """Lensing potential of point mass"""
     theta_step = arr_theta[0,1,0] - arr_theta[0,0,0]
-    theta_E_l = theta_Ein(M_l, D_l, D_s)
+    theta_E_l = theta_E(M_l, d_l,d_s,d_ls)
     theta = np.linalg.norm(arr_theta,axis=0)
     theta[theta<theta_step] = theta_step
     return theta_E_l**2 * np.log(theta)
 
-def psi_star(kappa_star,M_star,D_l,D_s,arr_theta,theta_max,N_step):
+def psi_star(kappa_star,M_star,d_l,d_s,d_ls,arr_theta,theta_max,N_step):
     """Lensing potential of a collection of point masses with uniform spatial distribution and monochromatic mass function"""
     vec_delta_theta = np.linspace(-2*theta_max, 2*theta_max, 2*N_step+1)
     arr_delta_theta = np.asarray(np.meshgrid(vec_delta_theta, vec_delta_theta, indexing='ij'))
-    M_tot_star = kappa_star * Sigma_crit(D_l,D_s) * (2 * theta_max * D_l)**2
+    M_tot_star = kappa_star * Sigma_crit(d_l,d_s,d_ls) * (2 * theta_max * d_l)**2
     N_star = np.random.poisson(M_tot_star / M_star)
     arr_rand_idx = np.random.randint(low=0, high=N_step+1, size=(N_star,2))
 
     arr_psi_star = np.zeros((N_step+1, N_step+1))
     arr_theta_star = np.zeros((N_star,2))
-    arr_psi_star_delta = psi_point(M_star,D_l,D_s,arr_delta_theta)
+    arr_psi_star_delta = psi_point(M_star,d_l,d_s,d_ls,arr_delta_theta)
     for i in range(N_star):
         idx = arr_rand_idx[i]
         arr_theta_star[i] = arr_theta[:,-idx[0]-1,-idx[1]-1]

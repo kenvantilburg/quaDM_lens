@@ -2,6 +2,9 @@ from natural_units_GeV import *
 from preamble import *
 from macro_lens_functions import *
 
+##### Linear power spectrum #####
+
+
 ##### DM profiles #####
 def rho_Einasto(r, rho_s, r_s, alpha=0.16):
     """Mass density of Einasto profile"""
@@ -75,46 +78,58 @@ def alpha_Einasto_200(M_200, d_l, d_s, d_ls, arr_theta):
     rho_s = rho_s_Einasto_200(M_200)
     return alpha_Einasto(rho_s, r_s, d_l, d_s, d_ls, arr_theta)
 
-##### DM Fourier transforms #####
-vec_x_b = np.logspace(-4,4,int(1e3))
-vec_x_k = np.logspace(-3,6,int(5e2))
-vec_m_x_b = int_m_x_b(vec_x_b)
-vec_F_x_k = np.zeros_like(vec_x_k)
+# ##### DM Fourier transforms #####
+# vec_x_b = np.logspace(-4,4,int(1e3))
+# vec_x_k = np.logspace(-3,6,int(5e2))
+# vec_m_x_b = int_m_x_b(vec_x_b)
+# vec_F_x_k = np.zeros_like(vec_x_k)
 
-for i_k, x_k in enumerate(tqdm(vec_x_k)):
-    a = np.min([1e-4, 1e-4 * x_k])
-    b = np.max([1e3])
-    vec_F_x_k[i_k] = quad(lambda x_b: sp.special.jv(1,x_b) * int_m_x_b(x_b / x_k) / vec_m_x_b[-1],
-                          a=a, b=b,
-                          epsabs=1e-7,epsrel=1e-5,limit=2000)[0]
-# form factor for Einasto profile
-int_F_x_k = interp1d(vec_x_k, vec_F_x_k, bounds_error=False, fill_value='extrapolate') 
+# for i_k, x_k in enumerate(tqdm(vec_x_k)):
+#     a = np.min([1e-4, 1e-4 * x_k])
+#     b = np.max([1e3])
+#     vec_F_x_k[i_k] = quad(lambda x_b: sp.special.jv(1,x_b) * int_m_x_b(x_b / x_k) / vec_m_x_b[-1],
+#                           a=a, b=b,
+#                           epsabs=1e-7,epsrel=1e-5,limit=2000)[0]
+# # form factor for Einasto profile
+# int_F_x_k = interp1d(vec_x_k, vec_F_x_k, bounds_error=False, fill_value='extrapolate') 
 
-##### Analytic power spectrum
-vec_x_k = np.logspace(-5,5,int(1e3))
-vec_F_x_k_integral_d = np.zeros_like(vec_x_k)
-vec_F_x_k_integral_c = np.zeros_like(vec_x_k)
-epsabs = 1e-7
-epsrel = 1e-5
-limit = 1000
-for i_k, x_k in enumerate(tqdm(vec_x_k)):
-    vec_F_x_k_integral_d[i_k] = quad(lambda phi: (int_F_x_k(x_k / np.cos(phi)))**2,
-                          a=-np.pi/2, b=np.pi/2,
-                          epsabs=epsabs,epsrel=epsrel,limit=limit)[0]
-    vec_F_x_k_integral_c[i_k] = quad(lambda phi: np.cos(2*phi) * (int_F_x_k(x_k / np.cos(phi)))**2,
-                          a=-np.pi/2, b=np.pi/2,
-                          epsabs=epsabs,epsrel=epsrel,limit=limit)[0]
-int_F_x_k_integral_d = interp1d(vec_x_k, vec_F_x_k_integral_d, bounds_error=False, fill_value=(vec_F_x_k_integral_d[0],0)) # integral of F^2 over phi
-int_F_x_k_integral_c = interp1d(vec_x_k, vec_F_x_k_integral_c, bounds_error=False, fill_value=(0,0)) # integral of F^2 * cos(2*phi) over phi
+# ##### Analytic power spectrum
+# vec_x_k = np.logspace(-5,5,int(1e3))
+# vec_F_x_k_integral_d = np.zeros_like(vec_x_k)
+# vec_F_x_k_integral_c = np.zeros_like(vec_x_k)
+# epsabs = 1e-7
+# epsrel = 1e-5
+# limit = 1000
+# for i_k, x_k in enumerate(tqdm(vec_x_k)):
+#     vec_F_x_k_integral_d[i_k] = quad(lambda phi: (int_F_x_k(x_k / np.cos(phi)))**2,
+#                           a=-np.pi/2, b=np.pi/2,
+#                           epsabs=epsabs,epsrel=epsrel,limit=limit)[0]
+#     vec_F_x_k_integral_c[i_k] = quad(lambda phi: np.cos(2*phi) * (int_F_x_k(x_k / np.cos(phi)))**2,
+#                           a=-np.pi/2, b=np.pi/2,
+#                           epsabs=epsabs,epsrel=epsrel,limit=limit)[0]
+# int_F_x_k_integral_d = interp1d(vec_x_k, vec_F_x_k_integral_d, bounds_error=False, fill_value=(vec_F_x_k_integral_d[0],0)) # integral of F^2 over phi
+# int_F_x_k_integral_c = interp1d(vec_x_k, vec_F_x_k_integral_c, bounds_error=False, fill_value=(0,0)) # integral of F^2 * cos(2*phi) over phi
+
+def F_G_cusp(k):
+    """Form factor for gaussian profile with 1/r cusp"""
+    return np.exp(-k**2/2)
+
+def F_G_cusp_integral_d(x_k):
+    """Diagonal piece of F^2 integral"""
+    return np.pi * sp.special.erfc(x_k)
+
+def F_G_cusp_integral_c(x_k):
+    """Cosine piece of F^2 cos(2phi) integral. Form is approximate but works to 5%"""
+    return (6/5) / (1 + 1/x_k) * np.pi * sp.special.erfc(x_k)
 
 def C_ij_integral(x_k, zeta):
     """Integral for analytic power spectrum"""
-    int_d = int_F_x_k_integral_d(x_k)
-    int_c = int_F_x_k_integral_c(x_k)
+    int_d = F_G_cusp_integral_d(x_k)
+    int_c = F_G_cusp_integral_c(x_k)
     return np.asarray([[int_d + np.cos(2*zeta) * int_c, np.sin(2*zeta) * int_c],
                         [np.sin(2*zeta) * int_c, int_d - np.cos(2*zeta) * int_c]])
-
 
 def C_EPIC(omega, t_int=10*year, N_obs=100, sigma_delta_theta=muas):
     """Noise power spectrum of EPIC"""
     return t_int / N_obs * sigma_delta_theta**2 / (1e-50 + np.heaviside(omega  * t_int / (2*np.pi) - 1,0))
+

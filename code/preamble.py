@@ -13,6 +13,7 @@ from scipy.optimize import fmin
 import lenstronomy
 import copy
 
+
 from astropy.coordinates import SkyCoord
 
 import seaborn as sns
@@ -21,6 +22,8 @@ import matplotlib.pyplot as plt
 from matplotlib import colors as mcolors
 from matplotlib.patches import Ellipse
 from mpl_toolkits.axes_grid1 import AxesGrid, make_axes_locatable
+from matplotlib.animation import FFMpegWriter, FuncAnimation
+
 plt.rcdefaults()
 fontsize = 12
 from matplotlib import font_manager

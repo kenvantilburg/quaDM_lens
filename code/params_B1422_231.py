@@ -30,12 +30,13 @@ labels = ['A','B','C','D']
 # flux
 flux_ratios = np.array([1, 1.116, 0.59, 0.032]) # flux ratios between the images (relative to A)
 
-# (unlensed) source size from Mosquera 2011 -- radius at which  T = lambda_rest with lambda_obs = 814 nm
+# (unlensed) source size from Mosquera 2011 -- radius at which  T = lambda_rest with lambda_obs = 814 nm at cos i = 1/2
 R_source = 2.29e15 * cm # physical radius
 theta_source = R_source / d_source # angular radius of source in rad
-theta_500 = (500/814)**(4/3) * theta_source # angular radius where T = lambda_rest with lambda_obs = 500 nm, assuming T ~ R^(-3/4)
+theta_500 = (500/814)**(4/3) * theta_source / np.sqrt(2) # angular radius where T = lambda_rest with lambda_obs = 500 nm, assuming T ~ R^(-3/4), face-on
 M_star = 0.3 * M_Solar 
-theta_E_star = np.sqrt(4 * G_N * M_star * (1+z_lens) * D_lens_source / (D_lens*D_source))
+#theta_E_star = np.sqrt(4 * G_N * M_star * (1+z_lens) * D_lens_source / (D_lens*D_source))
+theta_E_star = theta_E(M_star, d_lens, d_source, d_lens_source)
 R_E_star = theta_E_star * d_source # physical Einstein radius of solar mass on source plane
 #print('R_source = ', str(R_source/(1e15*cm)) + 'e15 cm')
 #print('R_E_star = ', str(R_E_star/(1e16*cm))[0:5] + 'e16 cm')
