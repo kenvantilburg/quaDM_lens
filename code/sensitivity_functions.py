@@ -129,6 +129,21 @@ def C_ij_integral(x_k, zeta):
     return np.asarray([[int_d + np.cos(2*zeta) * int_c, np.sin(2*zeta) * int_c],
                         [np.sin(2*zeta) * int_c, int_d - np.cos(2*zeta) * int_c]])
 
+def C_ij_integral_src(x_k, x_src, zeta):
+    """C_ij_integral including a finite-source form factor.
+
+    The source form factor |W~|^2 is the squared Fourier transform of the image
+    surface-brightness profile (the effective quasar form factor W of Galanis+ 2023,
+    arXiv:2307.06989). For a Gaussian source surface-brightness profile and the
+    Gaussian-cutoff cusp halo F(k)=exp(-k^2/2), it multiplies the
+    phi-integrand with the same 1/cos(phi) structure as the halo form factor,
+    so the two add in quadrature inside the closed-form integral:
+        int dphi F[x_k/c_phi]^2 |W~[x_src/c_phi]|^2 = pi*erfc(sqrt(x_k^2+x_src^2)).
+    Here x_k = omega*gamma_L/mu_tilde and x_src = omega*theta_src^I/mu_tilde, with
+    theta_src^I the (magnified) image source size. Point source: x_src=0.
+    """
+    return C_ij_integral(np.sqrt(x_k**2 + x_src**2), zeta)
+
 def C_EPIC(omega, t_int=10*year, N_obs=100, sigma_delta_theta=muas):
     """Noise power spectrum of EPIC"""
     return t_int / N_obs * sigma_delta_theta**2 / (1e-50 + np.heaviside(omega  * t_int / (2*np.pi) - 1,0))

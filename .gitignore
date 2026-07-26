@@ -1,8 +1,17 @@
-# ignore pycache
+# python
 __pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# editors
+*.code-workspace
+.vscode/
 
 # mac os stuff
 *.DS_Store
+.DS_Store
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
