@@ -1,6 +1,6 @@
 """
 Expected (unlensed) relative proper motion mu of the source w.r.t. the lens,
-Eq. (eq:mu) of the paper, for the two benchmark systems:
+Eq. (mu) of the paper, for the two benchmark systems:
   * galaxy lens  B1422+231       (z_L = 0.34,  z_S = 3.62)
   * cluster lens SDSS J1029+2623 (z_L = 0.588, z_S = 2.199)
 

@@ -1,11 +1,19 @@
 """Acceleration-channel SNR of the lens-bound PROMPT-CUSP population (App. Prompt Cusps).
 
 Instrumental noise only, for B1422+231 (EPIC, 0.1 muas) and SDSS J1029+2623 (1 muas).
-Same machinery as impact_numbers.py: the cusps are modeled as Gaussian-cutoff cusp halos
-of mass M_cusp and effective size r_L ~ r_cusp/2 (half-mass matched; the answer is
-insensitive to this choice because the cusps are nearly point-like at the impact
-parameters that matter), carrying a lens-plane convergence kappa_L = f_cusp kappa^I.
-The finite optical source size is included via theta_src^I.
+Same machinery as impact_numbers.py, for a population of cusps of mass M_cusp and outer
+radius r_cusp carrying a lens-plane convergence kappa_L = f_cusp kappa^I, with the finite
+optical source size included via theta_src^I.
+
+HALO FORM FACTOR. The cusps use the truncated, cored r^{-3/2} transform of Eq. (cusp_FT)
+(F2_cusp below), NOT the Gaussian-cutoff form factor of Sec. III B -- this is the
+substitution stated in App. Prompt Cusps, and it is what the T_kd sweep at the bottom of
+this file (the source of the paper's SNR = 1 at T_kd ~ 6 MeV) uses. The Gaussian-cutoff
+proxy at the half-mass radius r_L ~ r_cusp/2 is adequate only while the cusps are
+UNRESOLVED, which holds for the fiducial 30 MeV block below (where it agrees with the
+true profile to ~5%) but not once the sweep grows r_cusp past the sweep scale: the sweep
+prints it alongside precisely to expose the size of that modeling choice (SNR 1.02 vs
+0.62 at the 6 MeV threshold).
 """
 import sys, os
 # run from anywhere: the sibling modules and the ../figs paths are resolved relative
@@ -275,23 +283,25 @@ for T_kd in [30., 20., 15., 12., 10., 8., 6., 5., 4., 3., 2.]:
 
 # ============================ occupancy: is the Gaussian (PSD) description still valid?
 # Sec. II rests the PSD treatment of Eq. (C) on a large column occupancy
-# N_col = kappa_L Sigma_cr r_L^2 / M_L, and warns that the count that actually matters is
-# the WEIGHTED effective number of perturbers, reduced for cuspy profiles. Prompt cusps are
+# N_col = kappa_L Sigma_cr r_L^2 / M_L, and notes that the effective number of perturbers
+# can be smaller for cuspier profiles or denser microhalos. Prompt cusps are
 # exactly that case, and lowering T_kd makes them heavier but RARER (n ~ 1/M_cusp ~ T_kd^3),
 # so the sweep above walks toward the nearest-neighbour-dominated regime.
 #
 # Weighting: for a lens at impact parameter b from the swept image path, the fitted
 # differential acceleration is ~ alpha(b) v^2/b^2, so the per-encounter contribution to the
 # variance is s(b) = [alpha(b)/b^2]^2 with alpha = M_2D(<b)/b. Inside the cusp
-# M_2D ~ b^{3/2}, hence alpha ~ b^{1/2} and s ~ b^-3: dV/dln b ~ b^-1 is dominated by the
-# SMALLEST impact parameter, which is pinned by the magnified source size b_src (NOT by
-# r_cusp). Encounters along the campaign path have a uniform density dN = 2 n L db out to
-# b ~ L = mu_tilde tau, beyond which the encounter is slower than the campaign and the
-# omega^4 F_2 kernel discards it. The effective number of contributors is then the inverse
-# participation ratio N_perturb = (int s dN)^2 / int s^2 dN; N_perturb ~ 1 is the point at
-# which the nearest perturber alone matters as much as all the others combined. This is
-# the "weighted effective number of perturbers" of Sec. II C -- NOT the paper's N_eff,
-# which is the effective number of DFT MODES, sum_a lambda_a/(1+lambda_a) (Sec. II E).
+# M_2D ~ b^{3/2}, hence alpha ~ b^{1/2} and s ~ b^-3: dV/dln b ~ b s ~ b^-2 is dominated
+# by the SMALLEST impact parameter, which is pinned by the magnified source size b_src
+# (NOT by r_cusp). Encounters along the campaign path have a uniform density dN = 2 n L db
+# out to b ~ L = mu_tilde tau, beyond which the encounter is slower than the campaign and
+# the omega^4 F_2 kernel discards it. The effective number of contributors is then the
+# inverse participation ratio N_perturb = (int s dN)^2 / int s^2 dN; N_perturb ~ 1 is the
+# point at which the nearest perturber alone matters as much as all the others combined.
+# With b_src and L both fixed, N_perturb ~ 2 n L b_src ~ T_kd^3, the scaling quoted in
+# Sec. IV C. This weighted count is what Sec. II C means by an effective number of
+# perturbers "smaller for cuspier profiles" -- NOT the paper's N_eff, which is the
+# effective number of DFT MODES, sum_a lambda_a/(1+lambda_a) (Sec. II E).
 i_B = 1                                             # image B drives the pair variance
 Sigma_cr_v = Sigma_crit(d_lens, d_source, d_lens_source)
 Sigma_L = f_cusp*kappa_fit[i_B]*Sigma_cr_v          # projected mass density in cusps
@@ -343,10 +353,11 @@ for T_kd in [30., 20., 15., 12., 10., 9., 8., 6., 5., 4., 3., 2.]:
     print("%7.0f %11.1e %11.2e | %9.1f %11.2f %9.2f"
           % (T_kd, M_c/M_Solar, r_c/pc, N_col, N_src, N_perturb))
 
-# Validation: Sec. II states the weighted count is "comparable to N_col for the smooth,
-# Gaussian-cutoff profiles adopted below". Run the SAME estimator on that profile
-# (rho ~ exp[-r^2/2 r_L^2]/r, so M_2D rises ~ b^2 at small b and saturates) and check that
-# it is NOT nearest-neighbour dominated where the cusps are. Note N_perturb and N_col use
+# Validation: Sec. II C's claim is that the count is reduced only for profiles cuspier
+# than the smooth, Gaussian-cutoff one adopted there. Run the SAME estimator on that
+# profile (rho ~ exp[-r^2/2 r_L^2]/r, so M_2D rises ~ b^2 at small b and saturates) and
+# check that it is NOT nearest-neighbour dominated where the cusps are, i.e. that the
+# reduction below is specific to the r^{-3/2} cusps. Note N_perturb and N_col use
 # different normalizations (swept path vs crossing-time column), so compare trends and
 # orders of magnitude, not absolute values.
 def M_2D_smooth(b, r_L):
@@ -355,8 +366,8 @@ def M_2D_smooth(b, r_L):
     u = b/r_L
     return 1 - np.exp(-u**2/2)          # exact for this profile: M_2D/M_L = 1 - e^{-u^2/2}
 print()
-print("validation, smooth Gaussian-cutoff profile at the same (M_L, r_L) [Sec. II claim:")
-print("weighted count comparable to N_col, i.e. NOT nearest-neighbour dominated]:")
+print("validation, smooth Gaussian-cutoff profile at the same (M_L, r_L) [Sec. II C: the")
+print("reduction is specific to cuspier profiles, so this one stays well above unity]:")
 print("%7s %11s %11s | %9s %11s %9s" % ("T_kd", "M_L", "r_L", "N_col", "N(<b_src)", "N_perturb"))
 for T_kd in [30., 9., 6., 3., 2.]:
     s_ = (T_kd/30.)**-3

@@ -18,7 +18,7 @@ figures themselves are in [`figs/`](figs).
 ## What this computes
 
 A strongly lensed quasar's macro-images sweep across the dark matter substructure of the
-lens (and of the line of sight) at $\sim10^2$–$10^3\ \mathrm{km\,s^{-1}}$. The
+lens (and of the line of sight) at $\sim10^2$ – $10^3\ \mathrm{km\,s^{-1}}$. The
 collective, stochastic deflection by many substellar dark matter halos makes each image
 centroid execute a random walk with a calculable, red-tilted power spectrum. This
 repository contains the calculations behind the forecast in the manuscript.
@@ -244,7 +244,10 @@ numbers in step with a re-run of `sensitivity.ipynb`.
   terms of $\mathrm{erfc}$ (`C_ij_integral`). A finite source enters in quadrature,
   $x_k \to \sqrt{x_k^2 + x_\mathrm{src}^2}$ (`C_ij_integral_src`). $r_\mathrm{L}$ is the
   microhalo radius throughout; $r_s$ is reserved for the NFW/Einasto scale radius of the
-  $\Lambda$CDM prediction curves.
+  $\Lambda$CDM prediction curves. The one exception is the prompt cusps: as in App. Prompt
+  Cusps, they use the truncated, cored $r^{-3/2}$ transform instead of the Gaussian-cutoff
+  form factor (`F2_cusp` in `cusp_snr.py`, `_cusp_FT2` in `matter_power.ipynb`), which
+  matters once $k\,r_\mathrm{cusp}\gtrsim1$.
 - **Sweep rate.** The image sweeps across a halo's deflection field at
   $\mathrm{d}(\theta^\mathrm{I}-\theta_\mathrm{L})/\mathrm{d}t =
   B^\mathrm{I}\mu - \mu_\mathrm{L}$: only the *bulk* lens motion $\mu$ is magnified by
@@ -284,7 +287,7 @@ spelled-out version of it. The non-obvious correspondences:
 | $x_\mathrm{sub}$ | `x_sub_fid` | host-centric distance $R_\mathrm{sub}/R_{200}^\mathrm{host}$ of the Moline+2017 relation |
 | $\overline{\rho}_{m,0}$ | `rho_M_0` | mean matter density today (from `natural_units_GeV`) |
 | $\mathcal{K}_\mathrm{S}$, $\Lambda_\mathrm{S}$ | `K_S`, `Lambda_S` | line-of-sight Limber integrals |
-| $N_\mathrm{eff}$ | — | effective number of **DFT modes** (Sec. II E); the weighted perturber count of Sec. II C is `N_perturb` in `cusp_snr.py` |
+| $N_\mathrm{eff}$ | — | effective number of **DFT modes** (Sec. II E); not to be confused with the weighted count of contributing perturbers behind Sec. II C's Gaussianity argument, which is `N_perturb` in `cusp_snr.py` |
 
 ---
 

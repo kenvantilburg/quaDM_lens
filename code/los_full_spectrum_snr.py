@@ -182,7 +182,7 @@ B_tang_clu = np.max(np.abs(pJ.eigvals_fit[2]))         # image C tangential, ~22
 mu_clu = np.sqrt((B_tang_clu*np.linalg.norm(pJ.v_lens_fid)/pJ.D_lens)**2 + pJ.mu_L_int**2)
 # worst-case post-subtraction stellar residual (Sec. III C): image-A budget, doubled
 # for the differential pair; see impact_numbers.py for its derivation.
-s2_star_pair = 2*1.29e-5*muasyy**2
+s2_star_pair = 2*1.25e-5*muasyy**2
 
 systems = [('B1422 galaxy, EPIC 0.1 muas', pB, B_tang_gal, mu_gal, 0.1*muas, s2_star_pair),
            ('J1029 cluster, 1 muas', pJ, B_tang_clu, mu_clu, 1.0*muas, 0.0)]
