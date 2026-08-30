@@ -1,3 +1,20 @@
+# ---------------------------------------------------------------------------
+# not part of the published paper (kept locally, never committed)
+# ---------------------------------------------------------------------------
+# stellar-microlensing illustrations and the movies they render
+code/micro_lens.ipynb
+figs/animation_lensing_*.mp4
+
+# notebook by-products that no figure in the paper uses:
+#   concept_*.pdf         the realization gallery concept.ipynb draws from
+#   concentration.pdf,
+#   scale_density.pdf     concentration-mass diagnostics from matter_power.ipynb
+#   matter_power_sub.pdf  provisional lens-bound variant of Fig. 8
+figs/concept_[0-9].pdf
+figs/concentration.pdf
+figs/scale_density.pdf
+figs/matter_power_sub.pdf
+
 # python
 __pycache__/
 *.py[cod]

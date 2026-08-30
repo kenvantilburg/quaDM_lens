@@ -26,20 +26,25 @@ Velocity budget (peculiar velocities in the CMB frame):
   v_S -- quasar host-halo peculiar velocity, ~300 km/s (1D); its contribution
          is strongly suppressed by the 1/[(1+z_S) d_S] weight.
 
-KINEMATICS (referee fix, 2026-07): the macro-image proper motion
-mu_tilde^I = B^I mu is set by the BULK velocities only (the mu computed here).
-The sweep rate of image I across a subhalo's deflection field is
-    d/dt[theta^I - theta_h] = B^I mu_bulk - mu_h,int :
-only the bulk term is magnified by B^I, because bulk source/lens/observer
-motion moves the IMAGE through the lens plane, whereas a subhalo's own orbital
-motion (sigma_int ~ 150 km/s 1D for a galaxy halo, ~ 1000 km/s for the
-cluster) moves the DEFLECTOR and enters UNMAGNIFIED:
-    mu_sweep = sqrt( |B^I mu_bulk|^2 + 2 (sigma_int/((1+z_L) d_L))^2 ).
-The unmagnified internal drift (~0.03 muas/yr galaxy, ~0.14 muas/yr cluster)
-is subdominant to |B mu_bulk| ~ 1 muas/yr in both benchmark systems.
-(The former convention, v_eff,stoch = sqrt(v_bulk^2 + 2 sigma_int^2) applied
-BEFORE the B magnification, wrongly boosted the internal motion by B -- a
-factor ~3 overestimate of the J1029 sweep rate.)
+KINEMATICS. The magnified image proper motion mu_tilde^I = B^I mu of Eq. (mu_tilde)
+is set by the BULK velocities only -- the mu computed here. The sweep rate of
+image I across a given subhalo's deflection field is
+    d/dt[theta^I - theta_L] = B^I mu - mu_L :
+only the bulk term is magnified by B^I, because bulk source/lens/observer motion
+moves the IMAGE through the lens plane, whereas a subhalo's own orbital motion
+(sigma_int ~ 150 km/s per axis in a galaxy halo, ~1000 km/s in the cluster)
+displaces the DEFLECTOR and enters UNMAGNIFIED:
+    mu_sweep = sqrt( |B^I mu|^2 + 2 (sigma_int/[(1+z_L) d_L])^2 ).
+The unmagnified internal drift (~0.03 muas/yr galaxy, ~0.14 muas/yr cluster) is
+subdominant to |B^I mu| ~ 1 muas/yr in both benchmark systems -- a <1% quadrature
+correction. Applying sqrt(v_bulk^2 + 2 sigma_int^2) BEFORE the B magnification
+would instead boost the internal motion by B, a factor ~3 overestimate of the
+J1029 sweep rate.
+
+The fiducials this script is meant to reproduce (params_B1422_231.py,
+params_J1029_2623.py) are |v_L| = 865 km/s for B1422+231 and v_bulk = 474 km/s
+for J1029+2623; the latter is raised to v_eff ~ 552 km/s by the moving member-halo
+("clump") term, which is not part of Eq. (mu) and so is not computed here.
 
 Run:  conda run -n quaDM python mu_expected.py
 """
@@ -111,9 +116,12 @@ def report(name, z_l, z_s, d_l, d_s, d_ls, target,
           f"{sigma_int_1D/(km/second):.0f} km/s)")
     print("      [sweep rate per image: mu_sweep = sqrt(|B mu_bulk|^2 + mu_int^2); "
           "mu_int is NOT boosted by B]")
-    v_stoch = v_bulk_eff  # fiducial forecast velocity = bulk only
+    v_fid = v_bulk_eff  # fiducial forecast velocity = bulk only
 
-    # magnified image motions
+    # Magnified image motions. The rms below averages over the (unknown) direction of the
+    # random terms; because B^I is strongly anisotropic it differs by tens of percent from
+    # mu_tilde^I evaluated at the single fiducial direction v_lens_fid used in the
+    # forecasts (e.g. 1.0 vs 0.74 muas/yr for J1029 image C at the same |v_L|).
     print("  magnified image motions mu_tilde^I = B^I mu:")
     for lab, B in zip(labels, inv_jacs):
         mu_t_o = B @ mu_o                                   # dipole-only part
@@ -122,7 +130,7 @@ def report(name, z_l, z_s, d_l, d_s, d_ls, target,
               f"{mu_t_o[1]/muasy:+.3f}) muas/yr;  expected rms "
               f"|mu_tilde| = {np.sqrt(rms2)/muasy:.3f} muas/yr")
 
-    return mu_rms, v_bulk_eff, v_stoch
+    return mu_rms, v_bulk_eff, v_fid
 
 
 # ------------------------------------------------------------------ inputs
@@ -143,18 +151,18 @@ if __name__ == "__main__":
     report("B1422+231 (galaxy lens)", pB.z_lens, pB.z_source,
            pB.d_lens, pB.d_source, pB.d_lens_source, coord_B1422,
            sigma_L_B1422, SIGMA_SRC, 150 * km / second,
-           B_jacs_B1422, pB.labels, v_fid=700)
+           B_jacs_B1422, pB.labels, v_fid=pB.v_lens_bulk / (km / second))
 
     report("SDSS J1029+2623 (cluster lens)", pJ.z_lens, pJ.z_source,
            pJ.d_lens, pJ.d_source, pJ.d_lens_source, coord_J1029,
            sigma_L_J1029, SIGMA_SRC, 1000 * km / second,
-           pJ.inv_jacobian_fit, pJ.labels, v_fid=1000)
+           pJ.inv_jacobian_fit, pJ.labels, v_fid=pJ.v_lens_bulk / (km / second))
 
-    # ------------------------------------------------- sanity anchor (paper)
+    # -------------------------- scaling check: mu and mu_tilde are linear in |v_L|
     print("\n" + "=" * 72)
-    print("Sanity anchor (App. macro-cluster of the paper): J1029 with "
-          "|v_L| = 1000 km/s bulk,\nv_o = v_S = 0, should give "
-          "mu ~ 0.1 muas/yr and mu_tilde^{B,C} ~ 2 muas/yr:")
+    print("Scaling check: J1029 with |v_L| = 1000 km/s bulk, v_o = v_S = 0.\n"
+          "At the 474 km/s fiducial the bright pair has mu_tilde^{B,C} ~ 1.0 muas/yr,\n"
+          "so this should come out about 1000/474 ~ 2.1 times larger:")
     v_l = np.array([1000 / np.sqrt(2), 1000 / np.sqrt(2)]) * km / second
     mu_anchor = mu_rel(np.zeros(2), v_l, np.zeros(2), pJ.z_lens, pJ.z_source,
                        pJ.d_lens, pJ.d_source, pJ.d_lens_source)
@@ -169,7 +177,7 @@ if __name__ == "__main__":
           "muas/yr;\nequivalent bulk velocity in km/s in parentheses):")
     print(f"{'budget':<10}{'sigma_grp':>10}{'sigma_flow':>11}{'sigma_src':>10}"
           f"{'B1422+231':>18}{'J1029+2623':>18}")
-    for tag, s_grp, s_flow, s_src in [("low",     400, 200, 200),
+    for tag, sigma_grp, sigma_flow, sigma_src in [("low",     400, 200, 200),
                                       ("central", 500, 300, 300),
                                       ("high",    600, 400, 400)]:
         row = []
@@ -178,15 +186,15 @@ if __name__ == "__main__":
                  pB.d_lens_source, coord_B1422, True),
                 (pJ.z_lens, pJ.z_source, pJ.d_lens, pJ.d_source,
                  pJ.d_lens_source, coord_J1029, False)]:
-            s_L = (np.sqrt(s_grp**2 + s_flow**2) if is_group else s_flow) \
+            sigma_L = (np.sqrt(sigma_grp**2 + sigma_flow**2) if is_group else sigma_flow) \
                 * km / second
             v_o_vec, _, _ = dipole_transverse(target)
             mu_o = mu_rel(v_o_vec, np.zeros(2), np.zeros(2),
                           z_l, z_s, d_l, d_s, d_ls)
-            var_axis = (s_L / ((1 + z_l) * d_l))**2 \
-                + (s_src * km / second / ((1 + z_s) * d_s))**2
+            var_axis = (sigma_L / ((1 + z_l) * d_l))**2 \
+                + (sigma_src * km / second / ((1 + z_s) * d_s))**2
             mu_rms = np.sqrt(np.linalg.norm(mu_o)**2 + 2 * var_axis)
             row.append(f"{mu_rms/muasy:.3f} "
                        f"({mu_rms*(1+z_l)*d_l/(km/second):.0f})")
-        print(f"{tag:<10}{s_grp:>10}{s_flow:>11}{s_src:>10}"
+        print(f"{tag:<10}{sigma_grp:>10}{sigma_flow:>11}{sigma_src:>10}"
               f"{row[0]:>18}{row[1]:>18}")

@@ -12,8 +12,9 @@
 # with `pip install classy` if you want to rebuild them.
 #
 # The figures use LaTeX text rendering (rcParams text.usetex = True), so a TeX
-# distribution with `latex` and `dvipng` on the PATH is required. The animation
-# cells of micro_lens.ipynb additionally need `ffmpeg`.
+# distribution with `latex` and `dvipng` on the PATH is required. `ffmpeg` is pulled
+# in only so that matplotlib's animation writers are available; no paper figure
+# needs it.
 name: quaDM
 channels:
   - conda-forge

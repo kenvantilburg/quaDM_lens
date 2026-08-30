@@ -1,8 +1,14 @@
+"""Natural units and physical constants, with GeV = 1.
+
+Every dimensional quantity in this repository is stored in these units; the
+conversions below (muas, year, pc, M_Solar, km/second, ...) are applied only when
+reading inputs in and when printing or plotting results. The cosmology block sets
+the paper's fiducial H_0 = 70 km/s/Mpc, Omega_M = 0.3, Omega_Lambda = 0.7 (Sec. I).
+"""
 import math
 import numpy as np
 
-# Notebook for user defined units. All dimensional quantities are in GeV = 1
-GeV = 1; 
+GeV = 1;
 TeV = 1e3 * GeV;
 MeV = 1e-3 * GeV; keV = 1e-3 * MeV; eV = 1e-3 * keV; meV = 1e-3 * eV; 
 

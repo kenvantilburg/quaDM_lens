@@ -1,3 +1,10 @@
+"""Common imports and plot styling shared by every notebook and script here.
+
+Imported with `from preamble import *` at the top of each module, together with
+`natural_units_GeV` (units) and `macro_lens_functions` (lensing geometry). It sets
+matplotlib to serif + LaTeX rendering, so a TeX installation with `latex` and
+`dvipng` on the PATH is required to reproduce the figures.
+"""
 import numpy as np
 import numpy.testing as npt
 import pandas as pd
@@ -13,7 +20,6 @@ from scipy.optimize import fmin
 import lenstronomy
 import copy
 
-
 from astropy.coordinates import SkyCoord
 
 import seaborn as sns
@@ -22,12 +28,11 @@ import matplotlib.pyplot as plt
 from matplotlib import colors as mcolors
 from matplotlib.patches import Ellipse
 from mpl_toolkits.axes_grid1 import AxesGrid, make_axes_locatable
-from matplotlib.animation import FFMpegWriter, FuncAnimation
+from matplotlib.animation import FFMpegWriter, FuncAnimation  # needs ffmpeg on the PATH
 
 # ---------------------------------------------------------------------------
 # Color palettes (Tsitsul "normal/bright/dark/fancy/tarnish" qualitative sets).
-# `xgfs_fancy6` is the palette used throughout the paper figures; import it from
-# here rather than redefining it in each notebook.
+# `xgfs_fancy6` is the palette used throughout the paper figures
 # ---------------------------------------------------------------------------
 xgfs_normal6 = 255**-1 * np.asarray([(64, 83, 211), (221, 179, 16), (181, 29, 20), (0, 190, 255), (251, 73, 176), (0, 178, 93), (202, 202, 202)])
 xgfs_normal12 = 255**-1 * np.asarray([(235, 172, 35), (184, 0, 88), (0, 140, 249), (0, 110, 0), (0, 187, 173), (209, 99, 230), (178, 69, 2), (255, 146, 135), (89, 84, 214), (0, 198, 248), (135, 133, 0), (0, 167, 108), (189, 189, 189)])

@@ -1,3 +1,12 @@
+"""Observed inputs for the cluster lens SDSS J1029+2623 (App. SDSS J1029+2623).
+
+A three-image quasar split by 22.5" by a foreground galaxy CLUSTER -- the cluster-lens
+analogue of the galaxy-lensed B1422+231 in params_B1422_231.py, feeding sensitivity.ipynb
+through the same interface. No lens model is refit here: the convergence and shear at the
+three images are taken directly from the cluster-scale reconstruction of Acebron+ 2022,
+evaluated at the quasar redshift. Distances follow the macro_lens_functions convention
+(lowercase d_* angular-diameter = the paper's D_L, D_S, D_LS; uppercase D_* comoving).
+"""
 from preamble import *
 from natural_units_GeV import *
 from macro_lens_functions import *
@@ -6,12 +15,7 @@ from astropy.coordinates import SkyCoord
 import pandas as pd
 cosmo = FlatLambdaCDM(H0=70, Om0=0.3)
 
-# SDSS J1029+2623: a three-image quasar lensed by a galaxy CLUSTER (image
-# separation 22.5"). Lens model (convergence & shear at the QSO redshift) from
-# the Acebron+2022 reconstruction. This is the cluster-lens analogue of the
-# (galaxy-lensed) B1422+231 system in params_B1422_231.py.
-
-# redshifts and distances
+# redshifts and distances (d_L ~ 1.37, d_S ~ 1.71, d_LS ~ 1.03 Gpc)
 z_lens = 0.588      # cluster redshift
 z_source = 2.1992   # quasar redshift
 d_lens = cosmo.angular_diameter_distance(z_lens).value * Mpc
@@ -49,9 +53,11 @@ theta = np.zeros((3, 2))
 theta[:, 0] = (df['RA'].to_numpy()[:3] - df['RA'].to_numpy()[0]) * 3600 * cos_dec  # arcsec
 theta[:, 1] = (df['Dec'].to_numpy()[:3] - df['Dec'].to_numpy()[0]) * 3600          # arcsec
 
-# lensing Jacobian A = I - H and its inverse B = A^{-1}, standard convention
-#   A = [[1-kappa-gamma1, -gamma2], [-gamma2, 1-kappa+gamma1]]
-# matching macro_lens.ipynb / App. (Macro-lensing Model) of the paper.
+# Lensing Jacobian J = I - H and its inverse B^I = (J^I)^-1, in the convention of
+#   J = [[1-kappa-gamma1, -gamma2], [-gamma2, 1-kappa+gamma1]],
+# matching macro_lens.ipynb and App. Macrolensing Models. mag_fit is the signed
+# magnification A^I = det B^I of Tab. tab:macro-cluster (the paper's A, not mu; A is
+# never the Jacobian in this work).
 jacobian_fit = np.zeros((3, 2, 2))
 for i in range(3):
     jacobian_fit[i] = [[1 - kappa_fit[i] - gamma1_fit[i], -gamma2_fit[i]],
@@ -62,77 +68,103 @@ eig_fit = np.linalg.eig(inv_jacobian_fit)
 eigvals_fit = eig_fit[0]
 eigvecs_fit = eig_fit[1]
 
-# ---- cluster velocity scale (relevant for lensing) ----
-# Velocity budget (computed in mu_expected.py; peculiar velocities in CMB frame):
-# observer: CMB dipole transverse component at this LOS: 212 km/s (apex sep. 34.9 deg).
-# lens:     bulk peculiar velocity of the cluster, ~300 km/s per axis (linear theory).
-#           The cluster carries its subhalos with it, so this is a BULK velocity.
-# source:   quasar host peculiar velocity ~300 km/s (1D).
-# Expected bulk-only <|mu|^2>^{1/2} = 0.046 muas/yr -> equivalent bulk transverse
-# velocity (1+z_L) d_L |mu| = 474 km/s: this sets the macro-image proper motion
-# mu_tilde = B mu, mu_tilde^{B,C} ~ 1 muas/yr -- the rate at which the images sweep
-# across the subhalo field.
+# ---- velocity budget of Eq. (mu) ("Expected motion" paragraph of Sec. III D and
+# "Velocity scale" of App. SDSS J1029+2623; computed in mu_expected.py, CMB frame) ----
+# observer v_o: CMB dipole transverse component at this LOS, 212 km/s (apex sep. 34.9 deg).
+# lens v_L:  bulk peculiar velocity of the cluster, ~300 km/s per axis (linear theory).
+#            The cluster carries its subhalos with it, so this is a BULK velocity.
+# source v_S: quasar host peculiar velocity ~300 km/s (1D).
+# Together: bulk-only <|mu|^2>^{1/2} = 0.046 muas/yr -> equivalent bulk transverse
+# velocity (1+z_L) d_L <|mu|^2>^{1/2} = 474 km/s, giving mu_tilde^{B,C} ~ 1.0 muas/yr.
 #
-# KINEMATICS (referee fix, 2026-07): the sweep rate of image I across a subhalo's
-# deflection field is d/dt[theta^I - theta_h] = B mu_eff - mu_h,int. Only the
-# macro-image motion is magnified by B; a subhalo's own orbital motion in the cluster
-# (sigma_v ~ 1000 km/s 1D, set by the ~22.5" splitting [theta_E ~ 15"]) moves the
-# DEFLECTOR, not the image, and so enters UNMAGNIFIED:
-#   mu_sweep = sqrt(|B mu_eff|^2 + 2 (sigma_v/((1+z_L) d_L))^2).
-# (Adding sigma_v to the velocity BEFORE magnifying, v = sqrt(474^2+2*1000^2)
-# ~ 1490 km/s, would wrongly boost the microhalos' orbital motion by B ~ 22: a
-# factor ~3 overestimate of the sweep rate and ~30-100 in acceleration variance.)
+# KINEMATICS. The sweep rate of image I across a given subhalo's deflection field is
+# d/dt[theta^I - theta_L] = B^I mu - mu_L. Only the macro-image motion is magnified by
+# B^I; a microhalo's own orbital motion in the cluster (sigma_v ~ 1000 km/s per axis, set
+# by the 22.5" splitting, theta_E ~ 11-18") displaces the DEFLECTOR, not the image, and
+# enters UNMAGNIFIED:
+#   mu_sweep = sqrt(|B^I mu|^2 + 2 (sigma_v/[(1+z_L) d_L])^2),
+# a ~1% quadrature correction for the bright images. NB adding sigma_v to the velocity
+# BEFORE magnifying (v = sqrt(474^2 + 2*1000^2) ~ 1490 km/s) would boost the microhalos'
+# own orbital motion by B ~ 22, overestimating the sweep rate ~3x and the acceleration
+# variance by ~30-100x.
 #
-# MACRO-IMAGE (EFFECTIVE) VELOCITY, 2026-07-18: the macro-image responds to the
-# motion of every mass component of the deflector, weighted by that component's
-# share of the local deflection gradient: differentiating the lens equation for a
-# multi-component lens, alpha = sum_c alpha_c(theta - theta_c(t)), gives
-#   d theta^I/dt = B [mu - sum_c H_c dmu_c],   H_c = grad alpha_c at the image.
+# MOVING-CLUMP TERM. The macro-image responds to the motion of every mass component of
+# the deflector, weighted by that component's share of the local deflection gradient:
+# differentiating alpha = sum_c alpha_c(theta - theta_c(t)) for a multi-component lens,
+#   d theta^I/dt = B^I [mu - sum_c H_c dmu_c],   H_c = grad alpha_c at the image.
 # A virialized, phase-mixed halo has a STATIC potential despite its fast-moving
-# particles, so only CLUMPED components count. The hierarchy is cluster > galaxy-
-# scale halos > microhalos: the member-galaxy halos (intermediate level) orbit at
-# the cluster dispersion sigma_v and contribute a fraction f_gal of the local
-# convergence+shear at the images (nearby members within ~5-10", plus the known
-# ~1e8 Msun radio-anomaly perturber near image B [Kratzer+2011], in a dynamically
-# disturbed cluster). Estimate f_gal ~ 0.1-0.4, fiducial 0.2 (uncertain x2).
-# Member orbits (~Gyr) are quasi-static over tau = 10 yr, so this term acts as a
-# constant addition to the image velocity (no spurious acceleration noise):
-#   v_eff = sqrt(v_bulk^2 + 2 (f_gal sigma_v)^2) ~ 550 km/s (fiducial)
-# spanning ~500-740 km/s for f_gal = 0.1-0.4.
-sigma_v_cluster = 1000 * km / second   # internal velocity dispersion (1D)
-v_lens_bulk = 474 * km / second        # bulk (COM) effective transverse velocity
-f_gal = 0.2                            # moving-clump fraction of local deflection gradient
-v_lens_eff = np.sqrt(v_lens_bulk**2 + 2 * (f_gal * sigma_v_cluster)**2)  # ~552 km/s
-mu_int_drift = np.sqrt(2) * sigma_v_cluster / ((1 + z_lens) * d_lens)  # unmagnified, rms 2D
-v_lens_fid = v_lens_eff / np.sqrt(2) * np.asarray([1., 1.])  # fiducial forecast vector
+# particles, so only CLUMPED components count. The hierarchy is cluster > galaxy-scale
+# halos > microhalos: the member-galaxy halos (intermediate level) orbit at the cluster
+# dispersion sigma_v and supply a fraction f_gal of the local convergence-plus-shear at
+# the images (kappa + gamma ~ 0.95 at B,C; nearby members within ~5-10", plus the known
+# ~1e8 Msun radio-anomaly perturber near image B [Kratzer+ 2011], in a dynamically
+# disturbed cluster). We estimate f_gal ~ 0.1-0.4, fiducial 0.2 (uncertain by ~x2).
+# Member orbits (~Gyr) are quasi-static over tau = 10 yr, so this term is a constant
+# addition to the image velocity and injects no spurious acceleration noise:
+#   v_eff = sqrt(v_bulk^2 + 2 (f_gal sigma_v)^2) ~ 550 km/s at the fiducial f_gal,
+# spanning ~500-740 km/s over f_gal = 0.1-0.4.
+sigma_v_cluster = 1000 * km / second   # cluster internal velocity dispersion sigma_v (1D)
+v_lens_bulk = 474 * km / second        # bulk (center-of-mass) transverse velocity
+f_gal = 0.2                            # moving-clump share of the local deflection gradient
+v_lens_eff = np.sqrt(v_lens_bulk**2 + 2 * (f_gal * sigma_v_cluster)**2)  # v_eff ~ 552 km/s
+mu_L_int = np.sqrt(2) * sigma_v_cluster / ((1 + z_lens) * d_lens)  # mu_L, unmagnified rms 2D
+v_lens_fid = v_lens_eff / np.sqrt(2) * np.asarray([1., 1.])  # fiducial forecast direction
 
-# ---- stellar microlensing background ----
-# Images form at ~90-100 kpc from the cluster center, in the dark-matter-dominated
-# outskirts where only the intracluster light / BCG outskirts contribute stars.
-# Sigma_* ~ few M_sun/pc^2 and Sigma_crit ~ 2000 M_sun/pc^2 give a small
-# stellar convergence -- much lower than in a galaxy lens (kappa_* ~ 0.05).
-kappa_star = 0.003                 # fiducial stellar convergence at the images
-M_star = 0.3 * M_Solar             # characteristic microlens mass
-theta_E_star = theta_E(M_star, d_lens, d_source, d_lens_source)
+# ---- stellar microlensing background (App. "Stellar component") ----
+# Images form ~90-100 kpc from the cluster center, in the dark-matter-dominated outskirts
+# where only the intracluster light (ICL) contributes stars. Morishita+2017 Fig. 5 (the
+# six HFF clusters, M_500 ~ 1.2-1.8e15 M_sun) reads log Sigma_*/(M_sun/kpc^2) ~ 6.3-6.7 at
+# 100 kpc, i.e. Sigma_* ~ 2-5 M_sun/pc^2; against Sigma_cr = 2021 M_sun/pc^2 that is
+# kappa_* ~ 0.001-0.0025, and those clusters are ~10x more massive than this one
+# (M_vir ~ 2e14 M_sun), so the reference is conservative. Zibetti+2005 stacks of
+# lower-mass clusters give several times less. Microlensing of the cluster lens
+# SDSS J1004+4112 gives kappa_* ~ 0.02-0.07 (Fores-Toribio+2024b), but at image radii of
+# only 40-70 kpc. Still more than an order of magnitude below B1422+231 (kappa_* ~ 0.05).
+kappa_star = 0.003                 # fiducial stellar convergence kappa_* at the images
+M_star = 0.3 * M_Solar             # characteristic microlens mass M_*
+theta_E_star = theta_E(M_star, d_lens, d_source, d_lens_source)  # theta_E,*
 
-# ---- source sizes (finite-source washout) ----
-# Optical/UV accretion-disk continuum: compact (~1 light-day), safely below the
-# optimal substructure size. Radio (VLBI core): much larger -- see below.
-# The finite-source form factor acts as a high-pass filter in halo angular size:
-# a halo of angular size gamma_L is washed out only when gamma_L < theta_src^I,
-# the *magnified* image source size. theta_src^I = B_tang * theta_src, with
-# B_tang the tangential (largest) eigenvalue of B^I = inv_jacobian_fit (the same
-# direction as the image motion mu_tilde).
-B_tang = np.max(np.abs(eigvals_fit), axis=1)   # tangential magnification per image
+# ---- host-halo location of the lensing subhalos, x_sub = R_sub / R_200^cluster ----
+# Needed by the Moline+2017 concentration relation behind the fiducial rho_s(M_s) band of
+# Fig. SNR (see sensitivity_functions.scale_params_NFW_Moline). The images sit ~95 kpc
+# from the cluster center; for M_vir ~ 2e14 M_Solar (Oguri+2012) the virial radius at
+# z_L is ~1 Mpc, so the projected x_perp ~ 0.1. Weighting the line of sight by an NFW
+# subhalo number density with c_host = 5 raises the median 3D distance by ~50%.
+M_200_cluster = 2e14 * M_Solar     # Oguri+2012 virial mass
+R_img_cluster = 95 * kpc           # image distance from the cluster center (App. J1029)
+rho_crit_z = rho_crit * (0.3 * (1 + z_lens)**3 + 0.7)
+R_200_cluster = (3 * M_200_cluster / (4 * np.pi * 200 * rho_crit_z))**(1/3)
+c_host = 5.
+_r_s_host = R_200_cluster / c_host
+_vec_z_los = np.concatenate([[0], np.logspace(-5, 0, 2000) * R_200_cluster])
+_r = np.sqrt(R_img_cluster**2 + _vec_z_los**2)
+_w = 1 / ((_r/_r_s_host) * (1 + _r/_r_s_host)**2)
+_cdf = np.concatenate([[0], np.cumsum(0.5*(_w[1:]+_w[:-1]) * np.diff(_vec_z_los))])
+x_sub_perp = R_img_cluster / R_200_cluster
+x_sub_fid = np.interp(0.5*_cdf[-1], _cdf, _r) / R_200_cluster
+print('R_200^cluster = %.0f kpc, x_sub = %.3f (projected %.3f)'
+      % (R_200_cluster/kpc, x_sub_fid, x_sub_perp))
 
-R_source = 1.5e15 * cm             # optical continuum radius (~1 light-day)
-theta_source = R_source / d_source # unlensed angular size
-theta_source_I = B_tang * theta_source  # magnified optical source size per image
+# ---- source sizes for the finite-source form factor of Eq. (finite_source) ----
+# The form factor |W~^I|^2 acts as a high-pass filter in halo angular size: a halo of
+# angular size gamma_L is washed out only for gamma_L < theta_src^I, the source size
+# MAGNIFIED by B^I. For the Gaussian source and Gaussian-cutoff cusp halo the two scales
+# add in quadrature (C_ij_integral_src), so theta_src^I = B_tang * theta_src with B_tang
+# the tangential (largest) eigenvalue of B^I -- the same direction as mu_tilde^I.
+B_tang = np.max(np.abs(eigvals_fit), axis=1)   # tangential stretch per image (~22.5 at B,C)
 
-# fiducial compact VLBI radio core radii (parsec scale); much larger than optical
-R_source_radio = np.asarray([0.01, 0.1, 1.0]) * pc
-theta_source_radio = R_source_radio / d_source          # unlensed radio sizes
-theta_source_radio_I = np.outer(B_tang, theta_source_radio)  # [image, core] magnified
+# Optical/UV accretion-disk continuum: compact (~1 light-day), so it clips only
+# M_L < 1e-5 M_sun. NB this is a plain geometric size, unlike the temperature-defined
+# R_500 of params_B1422_231 (which carries an extra (1+z_S)^(4/3)).
+R_src = 1.5e15 * cm                # optical continuum radius (~1 light-day)
+theta_src = R_src / d_source        # unlensed theta_src ~ 0.06 muas
+theta_src_I = B_tang * theta_src   # magnified theta_src^I ~ 1.3 muas at B,C
+
+# Compact VLBI radio cores are far larger and suppress all but the heaviest halos,
+# leaving only the acceleration channel (the "Radio interferometry" paragraph, Sec. III D).
+R_src_radio = np.asarray([0.01, 0.1, 1.0]) * pc
+theta_src_radio = R_src_radio / d_source          # unlensed radio sizes
+theta_src_radio_I = np.outer(B_tang, theta_src_radio)  # [image, core] magnified, ~27-2700 muas
 
 # ---- VLBI light-centroiding precision (radio channel) ----
 # Fiducial relative astrometric precision for very-long-baseline interferometry:
@@ -147,5 +179,5 @@ if __name__ == "__main__":
     print(f"scale at lens = {length_per_arcsec/kpc:.2f} kpc/arcsec")
     print(f"Sigma_crit = {Sigma_crit_val/(M_Solar/pc**2):.0f} M_sun/pc^2")
     for i in range(3):
-        print(f"  image {labels[i]}: mu={mag_fit[i]:+.1f}, |B| eigs={np.sort(np.abs(eigvals_fit[i]))}")
+        print(f"  image {labels[i]}: A={mag_fit[i]:+.1f}, |B| eigs={np.sort(np.abs(eigvals_fit[i]))}")
     print(f"theta_E_star(0.3 Msun) = {theta_E_star/muas:.2f} muas")
