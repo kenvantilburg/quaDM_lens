@@ -6,7 +6,7 @@ Code and figures for
 
 > K. Van Tilburg and D. E. Kaplan,
 > *Discovering Substellar Dark Matter Halos with Astrometric Weak Lensing of
-> Multiply Imaged Quasars*, arXiv:XXXX.XXXXX.
+> Multiply Imaged Quasars*, [arXiv:2608.27557](https://arxiv.org/abs/2608.27557).
 
 Every figure in the paper is produced by a notebook in [`code/`](code); the map from
 figure to notebook is in [Figures and tables](#figures-and-tables) below, and the
@@ -62,7 +62,7 @@ through their parameter modules.
 
 ## Headline numbers
 
-Reproducing Table `tab:bottomline` of the paper — the differential angular-acceleration
+Reproducing Table I of the paper — the differential angular-acceleration
 channel for the fiducial $\tau = 10\,\mathrm{yr}$, $N = 300$ campaigns, at
 $\rho_s = 1\,M_\odot\,\mathrm{pc^{-3}}$ and substructure fraction
 $f_\mathrm{sub} = 0.5$:
@@ -111,12 +111,11 @@ Tables:
 | `tab:macro` (B1422+231) | App. Macrolensing Models, B1422+231 | [`code/macro_lens.ipynb`](code/macro_lens.ipynb), end of Part I |
 | `tab:macro-cluster` (SDSS J1029+2623) | App. Macrolensing Models, SDSS J1029+2623 | [`code/macro_lens.ipynb`](code/macro_lens.ipynb), end of Part II |
 
-One figure in the repository is **not** in the paper:
+One figure in the repository is not in the paper:
 [`figs/requirements.pdf`](figs/requirements.pdf), from
 [`code/requirements.ipynb`](code/requirements.ipynb), plots the SNR of the table above
-against the per-epoch precision $\sigma_{\delta\theta}$. It was cut from the final draft
-but is kept here as the clearest summary of how the reach scales with astrometric
-capability.
+against the per-epoch precision $\sigma_{\delta\theta}$ as a summary of how the reach scales with astrometric capability. 
+It was cut from the final draft because it obscured the latent variable of source brightness (with which different observatories' SNRs scale differently).
 
 ---
 
@@ -168,7 +167,7 @@ figs/     the eight paper figures, plus requirements.pdf
 
 The standalone scripts only print to stdout; they write no files. Like the notebooks,
 they resolve their inputs (`macro_lens_results.npz`, the `Delta2_*.csv` spectra) relative
-to `code/`, so run them from there:
+to `code/`, so run them from there, e.g.:
 
 ```bash
 cd code
